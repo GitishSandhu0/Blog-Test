@@ -27,33 +27,51 @@ const DATA_DIR = path.join(process.cwd(), "data");
 const DB_PATH = path.join(DATA_DIR, "blogs.json");
 const POSTS_DIR = path.join(DATA_DIR, "posts");
 
-async function ensureDataDirs() {
-  await fs.mkdir(POSTS_DIR, { recursive: true });
+function getFsErrorCode(error: unknown) {
+  return (error as NodeJS.ErrnoException | undefined)?.code;
+}
+
+async function ensureWritableDir(target: string) {
   try {
-    await fs.access(DB_PATH);
-  } catch {
-    await fs.writeFile(
-      DB_PATH,
-      JSON.stringify({ posts: [] }, null, 2),
-      "utf-8"
-    );
+    await fs.mkdir(target, { recursive: true });
+  } catch (error) {
+    const code = getFsErrorCode(error);
+    if (code === "EEXIST" || code === "EROFS") {
+      return;
+    }
+    throw error;
   }
 }
 
 async function readDb(): Promise<BlogMeta[]> {
-  await ensureDataDirs();
-  const file = await fs.readFile(DB_PATH, "utf-8");
-  const parsed = JSON.parse(file) as { posts: BlogMeta[] };
-  return parsed.posts ?? [];
+  try {
+    const file = await fs.readFile(DB_PATH, "utf-8");
+    const parsed = JSON.parse(file) as { posts: BlogMeta[] };
+    return parsed.posts ?? [];
+  } catch (error) {
+    const code = getFsErrorCode(error);
+    if (code === "ENOENT") {
+      return [];
+    }
+    console.error("Failed to read blog database", error);
+    return [];
+  }
 }
 
 async function writeDb(posts: BlogMeta[]) {
-  await ensureDataDirs();
-  await fs.writeFile(
-    DB_PATH,
-    JSON.stringify({ posts }, null, 2),
-    "utf-8"
-  );
+  await ensureWritableDir(DATA_DIR);
+  try {
+    await fs.writeFile(
+      DB_PATH,
+      JSON.stringify({ posts }, null, 2),
+      "utf-8"
+    );
+  } catch (error) {
+    if (getFsErrorCode(error) === "EROFS") {
+      throw new Error("Cannot persist posts on a read-only filesystem.");
+    }
+    throw error;
+  }
 }
 
 function slugify(title: string) {
@@ -111,11 +129,16 @@ export async function createBlog(input: CreateBlogInput): Promise<BlogMeta> {
     updatedAt: now,
   };
 
-  await fs.writeFile(
-    path.join(POSTS_DIR, `${slug}.mdx`),
-    input.content,
-    "utf-8"
-  );
+  await ensureWritableDir(POSTS_DIR);
+  const postFile = path.join(POSTS_DIR, `${slug}.mdx`);
+  try {
+    await fs.writeFile(postFile, input.content, "utf-8");
+  } catch (error) {
+    if (getFsErrorCode(error) === "EROFS") {
+      throw new Error("Cannot create posts on a read-only filesystem.");
+    }
+    throw error;
+  }
 
   await writeDb([newPost, ...posts]);
   return newPost;

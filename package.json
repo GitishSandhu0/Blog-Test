@@ -12,6 +12,8 @@
     "@heroicons/react": "^2.1.1",
     "gray-matter": "^4.0.3",
     "moment": "^2.30.1",
+    "mongodb": "^7.0.0",
+    "mongoose": "^9.0.0",
     "next": "16.0.3",
     "next-mdx-remote": "^5.0.0",
     "react": "19.2.0",

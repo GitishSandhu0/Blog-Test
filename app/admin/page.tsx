@@ -18,12 +18,13 @@ const initialForm = {
   publishedAt: "",
 };
 
+const UNAVAILABLE_MESSAGE = "Databse not hosted yet, feature unavailable";
+
 export default function AdminPage() {
   const [form, setForm] = useState(initialForm);
   const [posts, setPosts] = useState<BlogMeta[]>([]);
   const [message, setMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function refreshPosts() {
     const res = await fetch("/api/blogs", { cache: "no-store" });
@@ -39,32 +40,9 @@ export default function AdminPage() {
     });
   }, []);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setMessage(null);
-    setIsSubmitting(true);
-
-    const res = await fetch("/api/blogs", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: form.title,
-        summary: form.summary,
-        content: form.content,
-        publishedAt: form.publishedAt || undefined,
-      }),
-    });
-
-    if (res.ok) {
-      setForm(initialForm);
-      setMessage("Post created! It now appears on the home page.");
-      startTransition(() => refreshPosts());
-    } else {
-      const error = await res.json().catch(() => ({ message: "Unknown error" }));
-      setMessage(error.message ?? "Failed to create post");
-    }
-
-    setIsSubmitting(false);
+    setMessage(UNAVAILABLE_MESSAGE);
   }
 
   return (
@@ -80,6 +58,9 @@ export default function AdminPage() {
           <p className="text-base text-zinc-600 dark:text-zinc-300">
             Posts are text-only. Paste or type MDX and publish instantly.
           </p>
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800 dark:border-amber-900/40 dark:bg-amber-500/10 dark:text-amber-200">
+            {UNAVAILABLE_MESSAGE}
+          </div>
         </header>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -138,10 +119,9 @@ export default function AdminPage() {
 
           <button
             type="submit"
-            disabled={isSubmitting}
-            className="inline-flex w-full items-center justify-center rounded-full bg-amber-500 px-5 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex w-full items-center justify-center rounded-full bg-zinc-400 px-5 py-2 text-base font-semibold text-white shadow-sm"
           >
-            {isSubmitting ? "Publishing..." : "Publish post"}
+            {UNAVAILABLE_MESSAGE}
           </button>
 
           {message && (

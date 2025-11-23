@@ -1,9 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import {
-  createBlog,
-  listBlogMetadata,
-  CreateBlogInput,
-} from "@/lib/blogs";
+import { NextResponse } from "next/server";
+import { listBlogMetadata } from "@/lib/blogs";
 
 export async function GET() {
   try {
@@ -18,29 +14,9 @@ export async function GET() {
   }
 }
 
-export async function POST(req: NextRequest) {
-  try {
-    const body = (await req.json()) as Partial<CreateBlogInput>;
-    if (!body.title || !body.summary || !body.content) {
-      return NextResponse.json(
-        { message: "title, summary, and content are required" },
-        { status: 400 }
-      );
-    }
-
-    const newPost = await createBlog({
-      title: body.title,
-      summary: body.summary,
-      content: body.content,
-      publishedAt: body.publishedAt,
-    });
-
-    return NextResponse.json(newPost, { status: 201 });
-  } catch (error) {
-    console.error("Failed to create blog", error);
-    return NextResponse.json(
-      { message: "Failed to create blog" },
-      { status: 500 }
-    );
-  }
+export function POST() {
+  return NextResponse.json(
+    { message: "Databse not hosted yet, feature unavailable" },
+    { status: 503 }
+  );
 }

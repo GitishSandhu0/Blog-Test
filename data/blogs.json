@@ -1,6 +1,14 @@
 {
   "posts": [
     {
+      "id": "6e19f03b-7e23-4ca5-8dcb-41bd2332c5a9",
+      "slug": "test-2",
+      "title": "Test 2",
+      "summary": "It should work now",
+      "publishedAt": "2025-11-23T06:48:42.778Z",
+      "updatedAt": "2025-11-23T06:48:42.778Z"
+    },
+    {
       "id": "d4f8680a-3f30-40e2-8063-adb631b2e828",
       "slug": "new-blog-from-admin",
       "title": "New Blog from Admin",
